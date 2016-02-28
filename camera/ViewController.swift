@@ -9,7 +9,7 @@
 import UIKit
 import AVFoundation
 
-class ViewController: UIViewController {
+class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDelegate {
     let captureSession = AVCaptureSession()
     
     // If we find a device we'll store it here for later use
@@ -28,7 +28,7 @@ class ViewController: UIViewController {
     }
     
     func findDevice(){
-        captureSession.sessionPreset = AVCaptureSessionPreset1920x1080
+        captureSession.sessionPreset = AVCaptureSessionPresetMedium
         
         let devices = AVCaptureDevice.devices()
         
@@ -55,9 +55,27 @@ class ViewController: UIViewController {
         let previewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
         self.view.layer.addSublayer(previewLayer)
         previewLayer.frame = self.view.layer.frame
+        let video = AVCaptureVideoDataOutput()
+        captureSession.addOutput(video)
+        let queue:dispatch_queue_t = dispatch_queue_create("mauro puzza",nil)
+        video.setSampleBufferDelegate(self, queue: queue)
         captureSession.startRunning()
+    
     }
+    
+    func captureOutput(captureOutput: AVCaptureOutput!, didOutputSampleBuffer sampleBuffer: CMSampleBuffer!, fromConnection connection: AVCaptureConnection!){
+        let imageBuffer: CVImageBufferRef? = CMSampleBufferGetImageBuffer(sampleBuffer)
+        //CVPixelBufferLockBaseAddress(imageBuffer!, 0)
+        //let bytesPerRow: size_t = CVPixelBufferGetBytesPerRow(imageBuffer!)
+        //let width: size_t = CVPixelBufferGetWidth(imageBuffer!)
+      //  let height: size_t = CVPixelBufferGetHeight(imageBuffer!)
+    //    let src_buff = CVPixelBufferGetBaseAddress(imageBuffer!)
+  //      let data: NSData = NSData(bytesNoCopy: src_buff, length: bytesPerRow * height)
+//        CVPixelBufferUnlockBaseAddress(imageBuffer!, 0)
+       // print(data.bytes)
 
+
+    }
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
