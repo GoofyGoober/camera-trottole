@@ -16,11 +16,13 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
     let captureSession = AVCaptureSession()
     let video          = AVCaptureVideoDataOutput()
     let stillImage     = AVCaptureStillImageOutput()
-
+    var dataImg:NSData?
+    var connection:AVCaptureConnection?
     // If we find a device we'll store it here for later use
     var captureDevice : AVCaptureDevice?
-    
-    var socket = WebSocket(url: NSURL(string: "ws://192.168.0.5:8080")!)
+    // ip mac rete generata da ale 169.254.251.61:8080
+    // ip awai 192.168.0.5:8080
+    var socket = WebSocket(url: NSURL(string: "ws://169.254.251.61:8080")!)
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -84,51 +86,28 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         stillImage.outputSettings =  [AVVideoCodecKey: AVVideoCodecJPEG]
 
         captureSession.addOutput(stillImage)
-        //let queue:dispatch_queue_t = dispatch_queue_create("mauro-puzza",nil)
-        //video.setSampleBufferDelegate(self, queue: queue)
         captureSession.startRunning()
         // 24 frame
         // 0 e 1
-        NSTimer.scheduledTimerWithTimeInterval(0.02, target: self, selector:  Selector("scatta"), userInfo: nil, repeats: true)
-        self.socket.writeString("PROVA DA IPHONE VEERSO SERVER"); 
+        self.connection = self.stillImage.connectionWithMediaType(AVMediaTypeVideo)
+
+        NSTimer.scheduledTimerWithTimeInterval(0.1, target: self, selector:  Selector("scatta"), userInfo: nil, repeats: true)
     }
     
-    func scatta(){
-        
-        connessione()
-    }
 
-func connessione(){
-    let connection:AVCaptureConnection = self.stillImage.connectionWithMediaType(AVMediaTypeVideo)
-    self.stillImage.captureStillImageAsynchronouslyFromConnection(connection, completionHandler: {(imageDataSampleBuffer: CMSampleBuffer!, error:  NSError!) in
+func scatta(){
+
+    self.stillImage.captureStillImageAsynchronouslyFromConnection(connection, completionHandler: {(weak imageDataSampleBuffer: CMSampleBuffer?, weak error:  NSError?) in
         if imageDataSampleBuffer != nil{
-            let dataImg:NSData = AVCaptureStillImageOutput.jpegStillImageNSDataRepresentation(imageDataSampleBuffer)
-            self.socket.writeData(dataImg)
+            self.dataImg = AVCaptureStillImageOutput.jpegStillImageNSDataRepresentation(imageDataSampleBuffer)
+            self.socket.writeData(self.dataImg!)
+
         }
         //self.socket.writeString("Ciao da iphone")
     })
 
 }
     
-    func captureOutput( captureOutput: AVCaptureOutput!,
-                        didOutputSampleBuffer sampleBuffer: CMSampleBuffer!,
-                        fromConnection connection: AVCaptureConnection!)
-    {
-        //let jpeg = AVCaptureStillImageOutput.jpegStillImageNSDataRepresentation(sampleBuffer)
-        //socket.writeData(jpeg)
-        
-        //        let dataImg:NSdata= AVCaptureStillImageOutput.jpegStillImageNSDataRepresentation(imageDataSampleBuffer)
-        //        if let imageBuffer:CVImageBuffer? = CMSampleBufferGetImageBuffer(sampleBuffer){
-        //
-        //            // Lock the base address of the pixel buffer
-        //            CVPixelBufferLockBaseAddress(imageBuffer!, 0);
-        //
-        //            let bytesPerRow:size_t = CVPixelBufferGetBytesPerRow(imageBuffer);
-        //            let width:size_t = CVPixelBufferGetWidth(imageBuffer)
-        //            let height:size_t = CVPixelBufferGetHeight(imageBuffer)
-        //            let src_buff = CVPixelBufferGetBaseAddress(imageBuffer);
-        //        }
-    }
     
     
     override func didReceiveMemoryWarning() {
