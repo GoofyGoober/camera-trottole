@@ -1,2 +1,3 @@
 gem 'em-websocket'
-gem 'faker'
+#gem 'faker'
+gem 'awesome_print'

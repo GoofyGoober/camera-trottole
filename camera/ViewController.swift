@@ -8,11 +8,9 @@
 
 import UIKit
 import AVFoundation
-import Starscream
 
 
-
-class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDelegate, WebSocketDelegate {
+class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDelegate {
     let captureSession = AVCaptureSession()
     let video          = AVCaptureVideoDataOutput()
     let stillImage     = AVCaptureStillImageOutput()
@@ -22,36 +20,12 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
     var captureDevice : AVCaptureDevice?
     // ip mac rete generata da ale 169.254.251.61:8080
     // ip awai 192.168.0.5:8080
-    var socket = WebSocket(url: NSURL(string: "ws://169.254.251.61:8080")!)
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        setupWebSocket()
         findDevice()
         beginSession()
 
-    }
-    
-    func setupWebSocket(){
-        socket.delegate = self
-        socket.connect()
-    }
-    
-    func websocketDidConnect(socket: WebSocket) {
-        print("websocket is connected")
-        print("---")
-    }
-    
-    func websocketDidReceiveData(socket: WebSocket, data: NSData) {
-        print("got some data: \(data.length)")
-    }
-    
-    func websocketDidReceiveMessage(socket: WebSocket, text: String) {
-        print("arriva testo: \(text)")
-    }
-    
-    func websocketDidDisconnect(socket: WebSocket, error: NSError?) {
-        print("websocket is casso: \(error?.localizedDescription)")
     }
     
     func findDevice(){
@@ -96,18 +70,37 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
     
 
 func scatta(){
-
+    
     self.stillImage.captureStillImageAsynchronouslyFromConnection(connection, completionHandler: {(weak imageDataSampleBuffer: CMSampleBuffer?, weak error:  NSError?) in
         if imageDataSampleBuffer != nil{
             self.dataImg = AVCaptureStillImageOutput.jpegStillImageNSDataRepresentation(imageDataSampleBuffer)
-            self.socket.writeData(self.dataImg!)
-
+            self.sendImage(self.dataImg!)
         }
-        //self.socket.writeString("Ciao da iphone")
     })
 
 }
     
+    
+    func sendImage(data:NSData){
+        let url = NSURL(string: "http://192.168.0.5:8080")
+        let request = NSMutableURLRequest(URL: url!)
+        request.timeoutInterval = 5 
+        request.HTTPMethod = "POST"
+        request.HTTPBody = data
+        
+        var response: NSURLResponse? = nil
+        var reply:NSData?
+        do {
+           reply  = try NSURLConnection.sendSynchronousRequest(request, returningResponse:&response)
+            let results = NSString(data:reply!, encoding:NSUTF8StringEncoding)
+            print("Response: \(results)")
+        } catch {
+            let alertController = UIAlertController(title: "Errore Connessione", message: "Sto cercando di connetteri a \(url?.absoluteString)", preferredStyle: UIAlertControllerStyle.Alert)
+            alertController.addAction(UIAlertAction(title: "Dismiss", style: UIAlertActionStyle.Default,handler: nil))
+            self.presentViewController(alertController, animated: true, completion: nil)
+        }
+ 
+    }
     
     
     override func didReceiveMemoryWarning() {

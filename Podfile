@@ -3,5 +3,6 @@ platform :ios, '8.0'
 use_frameworks!
 
 target "camera" do
-  pod 'Starscream', git: 'https://github.com/daltoniam/Starscream.git'
+    pod "SAConfettiView"
+
 end
